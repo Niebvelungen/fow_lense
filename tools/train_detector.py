@@ -40,13 +40,17 @@ def main():
     from ultralytics import YOLO
     model = YOLO(a.model)
     model.train(
-        data=a.data, imgsz=640, epochs=a.epochs, batch=a.batch, workers=6,
+        data=a.data, imgsz=640, epochs=a.epochs, batch=a.batch, workers=4,
         project=os.path.dirname(a.out) or '.', name=os.path.basename(a.out), exist_ok=True,
         # cards are rectangles; keep geometry realistic, no vertical flips
         degrees=5, scale=0.5, translate=0.1, fliplr=0.0, flipud=0.0, mosaic=1.0, close_mosaic=8,
         hsv_h=0.02, hsv_s=0.5, hsv_v=0.4, patience=15, cos_lr=True, plots=False, verbose=False,
     )
-    export(os.path.join(a.out, 'weights', 'best.pt'), onnx_out)
+    save_dir = str(model.trainer.save_dir)  # ultralytics may nest this under runs/detect/
+    best = os.path.join(save_dir, 'weights', 'best.pt')
+    os.makedirs(os.path.join(a.out, 'weights'), exist_ok=True)
+    shutil.copy(best, os.path.join(a.out, 'weights', 'best.pt'))
+    export(best, onnx_out)
 
 
 if __name__ == '__main__':

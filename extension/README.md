@@ -15,9 +15,9 @@ high resolution card image on hover. Derived from the "Lens for Riftbound" exten
 | Stage | File | Notes |
 |---|---|---|
 | Frame sampling | `src/content.js` | 480px wide canvas grab every 500ms while the pointer is over the player |
-| Detection | `src/lib/yolo.js` + `models/card-detector.onnx` | YOLOv8, 640px letterbox, one class "card". Still the Riftbound model |
+| Detection | `src/lib/yolo.js` + `models/card-detector.onnx` | YOLOv8n, 640px letterbox, one class "card", fine-tuned on synthetic FoW scenes (`tools/train_detector.py`) |
 | Tracking | `src/lib/tracker.js` | IoU matching frame to frame |
-| Identification | `src/lib/identify.js`, `src/lib/embed-id.js` | On hover: crop box at 320px, embed at 128px, cosine match against `models/id-index.bin`. Accept at score 0.80 with margin 0.05 |
+| Identification | `src/lib/identify.js`, `src/lib/embed-id.js` | On hover: crop box at 320px, embed at 128px with `models/embedder.onnx` (MobileNetV3-small trained on FoW cards, `tools/train_embedder.py`), cosine match against `models/id-index.bin`. Accept at score 0.80 with margin 0.05 |
 | Overlay | `src/lib/overlay.js`, `src/overlay.css` | Positioned buttons plus hover zoom that loads the S3 image |
 
 Card images are linked from `https://fowsim.s3.amazonaws.com/media/cards/<image>.jpg`; the
@@ -28,12 +28,13 @@ extension packages no card art.
 ```
 # catalog (data/cards.json) from the fowsim DB export
 python ../tools/build_arena_json.py ../data/cards.json ../data/cards_arena.json
-# index (models/id-index.bin) from ../media/cards using the embedding model
+# index (models/id-index.bin) from ../media/cards using models/embedder.onnx (2 views per card)
 ../.venv/Scripts/python ../tools/build_index.py
+# retrain the models (GPU): see the docstrings of tools/train_embedder.py and tools/train_detector.py
 # offline test of the whole chain on a video
 ../.venv/Scripts/python ../tools/test_pipeline.py ../samples/<video>.mp4
 ```
 
 The index format is the Riftbound layout with magic `FOWIDX01`: 64 byte header, 40 byte
-card records, string heap, then float32 embeddings (8 variants per card image). Flip cards that
+card records, string heap, then float32 embeddings (2 views per card image: full card and art band). Flip cards that
 share one image become one entry named "Front // Back".

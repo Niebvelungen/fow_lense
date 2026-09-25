@@ -16,7 +16,7 @@ import onnxruntime as ort
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 DET_MODEL = os.path.join(ROOT, "extension/models/card-detector.onnx")
-EMB_MODEL = os.path.join(ROOT, "extension/models/embAll2_mnv3s128.onnx")
+EMB_MODEL = os.path.join(ROOT, "extension/models/embedder.onnx")
 INDEX_NPZ = os.path.join(ROOT, "data/index_embeddings.npz")
 
 MODEL_SIZE, CONF, NMS_IOU = 640, 0.25, 0.45

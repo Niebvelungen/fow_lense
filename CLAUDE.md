@@ -10,7 +10,9 @@ unpacked source lives in `ext/src/` (git-ignored, third party, reference only).
 |---|---|
 | `extension/` | The extension. Load unpacked in Chrome. See `extension/README.md` |
 | `extension/data/cards.json` | Packaged catalog: flat list of `{id, name, orientation, imageUrl, image, set, tags}` |
-| `extension/models/` | Git-ignored. `card-detector.onnx` (YOLOv8), `embAll2_mnv3s128.onnx` (embedder), `id-index.bin` (generated) |
+| `extension/models/` | Git-ignored. `card-detector.onnx` (YOLOv8n, ours), `embedder.onnx` (MobileNetV3-small, ours), `id-index.bin` (generated, 2 views per card) |
+| `runs/` | Git-ignored. Training outputs: `runs/embedder/{best.pt,embedder.onnx,log.jsonl}`, `runs/detector*/` |
+| `datasets/cards/` | Git-ignored. Synthetic YOLO dataset from `tools/make_det_dataset.py` |
 | `tools/` | Python tooling: DB extraction, JSON builders, index builder, offline test harness |
 | `data/cards.json` | Flat card export from the DB (all 8,307 cards, DB ids, abilities, rulings) |
 | `data/cards_arena.json` | Same data in the TCG Arena nested format plus `image` and `image_url` |
@@ -34,9 +36,28 @@ on hover: crop box at 320px -> embed 128x128 (ImageNet mean/std, 256-d unit vect
 match against index -> accept at score >= 0.80 and margin >= 0.05 -> overlay + S3 image zoom.
 
 `tools/test_pipeline.py` replicates this chain in Python for offline testing on videos and is the
-benchmark for any model change. Findings so far: the stock Riftbound models recognise large clear
-cards (stream sidebar previews) reliably but not small blurry table cards; our own embedder trained
-with heavy degradation augmentation is the main open work item, detector fine-tuning the second.
+benchmark for any model change (`--det-model`, `--emb-model`, `--index` to test candidates before
+installing them). `tools/contact_sheet.py` shows crops next to their top matches for eyeballing.
+
+Model history:
+- Stock Riftbound embedder: fine on large clear cards, near random on small blurry table cards.
+- Our embedder (`tools/train_embedder.py`, MobileNetV3-small + CosFace over 7,895 card images,
+  stream-condition augmentation from `tools/card_aug.py`): 96.7% top-1 on hard synthetic queries,
+  true match median 0.81 vs best wrong median 0.44. Rebuilding the index with 2 views per card
+  gives the same video results as 8 views, so the index is 17 MB instead of 66 MB.
+- Detector (`tools/train_detector.py`, YOLOv8n on `tools/make_det_dataset.py` scenes): finds more
+  small and rested table cards than the stock model. It tends to skip the large sidebar preview
+  card that stream overlays show; that is acceptable, the target is gameplay on the table, not UI.
+
+Training notes: Windows page file is small, so keep DataLoader workers modest (6 for the embedder,
+4 for YOLO) and never run both trainings at once. The trainer keeps a memmap cache of all card
+images in `runs/cards_208x290.npy`.
+
+## Product direction
+
+- Recognise cards in play on the table (physical camera feeds and online clients). Stream UI such
+  as the sidebar card preview is not a target; it is already readable.
+- Prefer an unlabelled box over a wrong label: acceptance thresholds stay strict.
 
 ## Conventions
 

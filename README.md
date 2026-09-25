@@ -50,11 +50,26 @@ index.
 The harness writes annotated frames, per-box crops and a `summary.json` to `results/<video>/`.
 The contact sheet puts each crop next to its top three matches so you can judge them by eye.
 
+## Training your own models
+
+Both models ship as ONNX and were trained here with the scripts in `tools/` (needs a CUDA GPU;
+`pip install torch torchvision --index-url https://download.pytorch.org/whl/cu128 ultralytics onnx onnxscript`):
+
+```
+.venv/Scripts/python tools/train_embedder.py --epochs 40          # -> runs/embedder/embedder.onnx
+.venv/Scripts/python tools/make_det_dataset.py --n 3000           # -> datasets/cards
+.venv/Scripts/python tools/train_detector.py --epochs 40          # -> runs/detector/card-detector.onnx
+```
+
 ## Status
 
-- Detection and identification work for large, clear cards such as the sidebar preview in a
-  feature match stream.
-- Small blurry table cards are detected only partially and identified poorly by the stock models.
-  Training a Force of Will specific embedder and fine-tuning the detector are the next steps.
+- The embedder is trained on all Force of Will card images with stream-style degradation and
+  identifies large and medium cards reliably; the index holds two views per card (full card and
+  art band, so full-art prints still match on their illustration).
+- The detector is fine-tuned on synthetic table scenes plus pseudo-labelled real frames and finds
+  most table cards, including rested ones. Stream UI such as the sidebar card preview is not a
+  target.
+- Very small blurry table cards (under about 60 px wide in a 720p stream) remain hard and are
+  left unlabelled rather than mislabelled.
 
 Force of Will is a trademark of Eye Spy Productions. This is an unofficial fan project.

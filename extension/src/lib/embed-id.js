@@ -10,7 +10,7 @@ const loadSession = () => {
   if (sessionPromise) return sessionPromise;
   ort.env.wasm.numThreads = 1;
   ort.env.wasm.wasmPaths = chrome.runtime.getURL("vendor/ort/");
-  sessionPromise = ort.InferenceSession.create(chrome.runtime.getURL("models/embAll2_mnv3s128.onnx"), {
+  sessionPromise = ort.InferenceSession.create(chrome.runtime.getURL("models/embedder.onnx"), {
     executionProviders: ["wasm"],
   });
   return sessionPromise;

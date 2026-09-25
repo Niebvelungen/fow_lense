@@ -218,7 +218,7 @@ def main():
 
     ds = CardViews(cache_path, len(images), bgs, a.views, a.epochs, seed=1)
     dl = DataLoader(ds, batch_size=a.batch, shuffle=False, num_workers=a.workers, pin_memory=True,
-                    persistent_workers=True, drop_last=True, prefetch_factor=4)
+                    persistent_workers=True, drop_last=True, prefetch_factor=2)
     steps_per_epoch = a.views // a.batch
     epoch, t0, tot, n = 0, time.time(), 0.0, 0
     model.train()

@@ -79,11 +79,12 @@ def scene(cards, rng, frames):
     boxes, areas = [], []
     # static chrome first: sidebar panel and top bar are part of the background
     sidebar = None
-    if rng.random() < 0.35:
-        w = rng.uniform(190, 320)
+    if rng.random() < 0.5:
+        w = rng.uniform(170, 400)
         h = w * 670 / 480
         panel_x = rng.choice([W - w / 2 - rng.uniform(10, 60), w / 2 + rng.uniform(10, 60)])
-        cv2.rectangle(bg, (int(panel_x - w / 2 - 30), 0), (int(panel_x + w / 2 + 30), H), (rng.randrange(0, 60),) * 3, -1)
+        panel_col = rng.choice([(rng.randrange(0, 60),) * 3, (rng.randrange(20, 60), rng.randrange(40, 90), rng.randrange(70, 130))])
+        cv2.rectangle(bg, (int(panel_x - w / 2 - 30), 0), (int(panel_x + w / 2 + 30), H), panel_col, -1)
         sidebar = (panel_x, w, h)
     if rng.random() < 0.5:
         cv2.rectangle(bg, (0, 0), (W, rng.randrange(30, 70)), (rng.randrange(0, 80),) * 3, -1)
@@ -104,10 +105,23 @@ def scene(cards, rng, frames):
         if b:
             boxes.append(b)
             areas.append(w * h)
-    if sidebar:  # large clean preview card on the panel
+    if sidebar:  # large clean preview card on the panel, often with a light border like stream overlays
         panel_x, w, h = sidebar
         card = imread_u(cards[rng.randrange(len(cards))])
-        b = paste(bg, card, panel_x, rng.uniform(h / 2 + 20, H - h / 2 - 20), w, h, rng.uniform(-1, 1), rng, idmap, len(boxes))
+        cy = rng.uniform(h / 2 + 20, H - h / 2 - 20) if rng.random() < 0.8 else H - h * rng.uniform(0.25, 0.45)
+        if rng.random() < 0.6:
+            bw = rng.randrange(4, 16)
+            col = (rng.randrange(200, 256),) * 3 if rng.random() < 0.7 else tuple(rng.randrange(150, 256) for _ in range(3))
+            cv2.rectangle(bg, (int(panel_x - w / 2 - bw), int(cy - h / 2 - bw)), (int(panel_x + w / 2 + bw), int(cy + h / 2 + bw)), col, -1)
+        b = paste(bg, card, panel_x, cy, w, h, rng.uniform(-1, 1), rng, idmap, len(boxes))
+        if b:
+            boxes.append(b)
+            areas.append(w * h)
+    if rng.random() < 0.12:  # centred zoom preview (online client hover)
+        card = imread_u(cards[rng.randrange(len(cards))])
+        h = rng.uniform(320, 640)
+        w = h * 480 / 670
+        b = paste(bg, card, W / 2 + rng.uniform(-200, 200), H / 2 + rng.uniform(-40, 40), w, h, rng.uniform(-1, 1), rng, idmap, len(boxes))
         if b:
             boxes.append(b)
             areas.append(w * h)
@@ -148,7 +162,7 @@ def yolo_label(boxes):
     return "".join(f"0 {(x0 + x1) / 2 / W:.6f} {(y0 + y1) / 2 / H:.6f} {(x1 - x0) / W:.6f} {(y1 - y0) / H:.6f}\n" for x0, y0, x1, y1 in boxes)
 
 
-def pseudo_label_frames(frames_dir, out_img, out_lbl, conf=0.6, limit=120):
+def pseudo_label_frames(frames_dir, out_img, out_lbl, conf=0.5, limit=400, copies=4):
     """Real frames labelled by the stock detector at high confidence (noisy but in-domain)."""
     from test_pipeline import detect, DET_MODEL
     import onnxruntime as ort

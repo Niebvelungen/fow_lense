@@ -19,7 +19,11 @@ STD = np.array([0.229, 0.224, 0.225], dtype=np.float32)
 MAGIC = b"FOWIDX01"
 
 # (x0, y0, x1, y1) fractions of the card image, plus optional blur radius (stream softness)
-VARIANTS = [
+VARIANTS_LITE = [
+    ((0.00, 0.00, 1.00, 1.00), 0.0),   # full card
+    ((0.00, 0.00, 1.00, 0.65), 0.0),   # art-focused (full-art prints differ below)
+]
+VARIANTS_FULL = [
     ((0.00, 0.00, 1.00, 1.00), 0.0),   # full card
     ((0.03, 0.03, 0.97, 0.97), 0.0),   # tight box
     ((0.07, 0.07, 0.93, 0.93), 0.0),   # tighter box
@@ -37,6 +41,9 @@ def to_tensor(img):
     arr = np.asarray(img, dtype=np.float32) / 255.0
     arr = (arr - MEAN) / STD
     return arr.transpose(2, 0, 1)
+
+
+VARIANTS = VARIANTS_FULL
 
 
 def variants_of(img):
@@ -87,11 +94,15 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--cards", default="extension/data/cards.json")
     ap.add_argument("--media", default="media/cards")
-    ap.add_argument("--model", default="extension/models/embAll2_mnv3s128.onnx")
+    ap.add_argument("--model", default="extension/models/embedder.onnx")
     ap.add_argument("--out", default="extension/models/id-index.bin")
     ap.add_argument("--npy", default="data/index_embeddings.npz")
     ap.add_argument("--limit", type=int, default=0)
+    ap.add_argument("--variants", choices=["full", "lite"], default="lite",
+                    help="lite = 2 views per card (trained embedder), full = 8 views (generic embedder)")
     a = ap.parse_args()
+    global VARIANTS
+    VARIANTS = VARIANTS_FULL if a.variants == "full" else VARIANTS_LITE
 
     cards = json.load(open(a.cards, encoding="utf-8"))
     by_image = {}
