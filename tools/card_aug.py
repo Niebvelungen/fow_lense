@@ -46,6 +46,33 @@ def rand_bg_patch(bgs, w, h, rng):
     return patch
 
 
+def occlude(img, rng):
+    """Draw 1-3 dice / counters / finger tips over the card (in place)."""
+    h, w = img.shape[:2]
+    for _ in range(rng.randrange(1, 4)):
+        kind = rng.random()
+        cx, cy = rng.randrange(w), rng.randrange(h)
+        size = int(min(w, h) * rng.uniform(0.12, 0.32))
+        if kind < 0.45:  # die: rounded square with pips
+            col = rng.choice([(240, 240, 240), (30, 30, 30), (40, 40, 200), (200, 40, 40), (30, 160, 60), (230, 200, 40)])
+            ang = rng.uniform(-40, 40)
+            box = cv2.boxPoints(((cx, cy), (size, size), ang)).astype(np.int32)
+            cv2.fillPoly(img, [box], col)
+            pip = (30, 30, 30) if sum(col) > 400 else (240, 240, 240)
+            for _ in range(rng.randrange(1, 7)):
+                cv2.circle(img, (cx + rng.randrange(-size // 3, size // 3 + 1), cy + rng.randrange(-size // 3, size // 3 + 1)),
+                           max(1, size // 10), pip, -1)
+        elif kind < 0.75:  # round counter / token
+            col = tuple(rng.randrange(0, 256) for _ in range(3))
+            cv2.circle(img, (cx, cy), size // 2, col, -1)
+            cv2.circle(img, (cx, cy), size // 2, tuple(max(0, c - 60) for c in col), 1)
+        else:  # finger tip / hand edge from a border
+            col = (rng.randrange(120, 200), rng.randrange(150, 210), rng.randrange(190, 245))
+            side = rng.randrange(4)
+            ex, ey = [(0, cy), (w, cy), (cx, 0), (cx, h)][side]
+            cv2.ellipse(img, (ex, ey), (int(size * 0.8), int(size * 1.4)), rng.uniform(0, 180), 0, 360, col, -1)
+
+
 def augment(card, bgs, rng, hard=1.0):
     """card: BGR uint8 full card image. Returns a 128x128 BGR uint8 view."""
     H, W = card.shape[:2]
@@ -59,7 +86,9 @@ def augment(card, bgs, rng, hard=1.0):
         j = 0.09 * hard
         x0, y0 = rng.uniform(0, j), rng.uniform(0, j)
         x1, y1 = rng.uniform(1 - j, 1), rng.uniform(1 - j, 1)
-    crop = card[int(y0 * H):int(y1 * H), int(x0 * W):int(x1 * W)]
+    crop = np.array(card[int(y0 * H):int(y1 * H), int(x0 * W):int(x1 * W)])  # copy: memmap slices are read-only
+    if rng.random() < 0.45 * hard:
+        occlude(crop, rng)
 
     # 2. paste onto background with a loose margin (YOLO box slack) and slight rotation
     ch, cw = crop.shape[:2]
@@ -67,10 +96,18 @@ def augment(card, bgs, rng, hard=1.0):
     mw, mh = int(cw * margin), int(ch * margin)
     canvas = rand_bg_patch(bgs, cw + 2 * mw, ch + 2 * mh, rng)
     canvas[mh:mh + ch, mw:mw + cw] = crop
-    if rng.random() < 0.5:
-        ang = rng.uniform(-7, 7) * hard
-        M = cv2.getRotationMatrix2D((canvas.shape[1] / 2, canvas.shape[0] / 2), ang, 1.0)
-        canvas = cv2.warpAffine(canvas, M, (canvas.shape[1], canvas.shape[0]), borderMode=cv2.BORDER_REFLECT)
+    if rng.random() < 0.6:
+        ang = (rng.uniform(-7, 7) if rng.random() < 0.6 else rng.uniform(-30, 30)) * hard
+        ch2, cw2 = canvas.shape[:2]
+        M = cv2.getRotationMatrix2D((cw2 / 2, ch2 / 2), ang, 1.0)
+        # enlarge the canvas so the rotated card stays inside its (axis aligned) box, fill with background
+        cos, sin = abs(M[0, 0]), abs(M[0, 1])
+        nw, nh = int(ch2 * sin + cw2 * cos), int(ch2 * cos + cw2 * sin)
+        M[0, 2] += nw / 2 - cw2 / 2
+        M[1, 2] += nh / 2 - ch2 / 2
+        bgfill = rand_bg_patch(bgs, nw, nh, rng)
+        rotated = cv2.warpAffine(canvas, M, (nw, nh), borderMode=cv2.BORDER_TRANSPARENT, dst=bgfill.copy())
+        canvas = rotated
     if rng.random() < 0.25:  # mild perspective (camera angle)
         h, w = canvas.shape[:2]
         d = 0.06 * hard

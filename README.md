@@ -50,6 +50,18 @@ index.
 The harness writes annotated frames, per-box crops and a `summary.json` to `results/<video>/`.
 The contact sheet puts each crop next to its top three matches so you can judge them by eye.
 
+## Labelling real crops
+
+The models improve most from crops taken from real streams. Dump crops with the harness, then label
+them in a local page (one keypress per crop, since the correct card is usually among the top five
+guesses shown next to it):
+
+```
+.venv/Scripts/python tools/test_pipeline.py samples/<video>.mp4 --every 30 --max-frames 70 --out results/label_<video>
+.venv/Scripts/python tools/label_server.py results/label_<video>      # opens http://localhost:8765
+.venv/Scripts/python tools/eval_labels.py                              # accuracy and threshold sweep on the labels
+```
+
 ## Training your own models
 
 Both models ship as ONNX and were trained here with the scripts in `tools/` (needs a CUDA GPU;

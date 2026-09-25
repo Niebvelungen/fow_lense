@@ -63,6 +63,18 @@ Training notes: Windows page file is small, so keep DataLoader workers modest (6
 4 for YOLO) and never run both trainings at once. The trainer keeps a memmap cache of all card
 images in `runs/cards_208x290.npy`.
 
+## Labelled crops (the real-data loop)
+
+- `tools/test_pipeline.py ... --out results/label_<video>` dumps every detected crop; the dense sets
+  for the two test videos are `results/label_yt_user_720p` (630) and `results/label_yt_gp_top4_720p` (227).
+- `tools/label_server.py results/label_* ` serves a local page (http://localhost:8765): keys 1-5 pick a
+  top-5 guess, u unknown, n not a card, d/r/t tag dice/rotated/rested, / searches any card.
+  Labels append to `data/labels/crops.jsonl` (committed; the crop images stay local).
+- `tools/eval_labels.py` scores any embedder+index on the labels: top-1/top-5, per-tag accuracy and a
+  threshold sweep (correct shown vs wrong shown). Use it for every model or threshold change.
+- `tools/train_embedder.py --real-labels data/labels/crops.jsonl` mixes labelled crops into training
+  (15% of views by default). Keep a held-out video out of training for honest evaluation.
+
 ## Product direction
 
 - Recognise cards in play on the table (physical camera feeds and online clients). Stream UI such

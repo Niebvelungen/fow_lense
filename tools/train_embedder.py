@@ -58,10 +58,46 @@ def hard_for_epoch(epoch, epochs, floor=0.5):
     return min(1.0, floor + epoch / max(1, epochs * 0.4))
 
 
+def load_real_crops(labels_path, files):
+    """(crop image BGR, class index) for labelled legible crops whose card is in the class list."""
+    import json as _json
+    cards = _json.load(open(os.path.join(ROOT, 'extension', 'data', 'cards.json'), encoding='utf-8'))
+    img_of = {c['id']: c['image'] for c in cards}
+    cls_of = {f: i for i, f in enumerate(files)}
+    seen, out = {}, []
+    for line in open(labels_path, encoding='utf-8'):
+        if line.strip():
+            r = _json.loads(line)
+            seen[r['crop']] = r
+    for r in seen.values():
+        cls = cls_of.get(img_of.get(r['card_id'], ''))
+        if cls is None:
+            continue
+        folder, name = r['crop'].split('/', 1)
+        im = imread_u(os.path.join(ROOT, 'results', folder, name))
+        if im is not None:
+            out.append((cv2.resize(im, (CACHE_W, CACHE_H), interpolation=cv2.INTER_LINEAR), cls))
+    return out
+
+
+def augment_real(img, rng):
+    """Light augmentation for real crops: they are already degraded, just jitter box and colour."""
+    h, w = img.shape[:2]
+    j = 0.06
+    x0, y0 = int(rng.uniform(0, j) * w), int(rng.uniform(0, j) * h)
+    x1, y1 = int(rng.uniform(1 - j, 1) * w), int(rng.uniform(1 - j, 1) * h)
+    img = img[y0:y1, x0:x1]
+    if rng.random() < 0.3:
+        img = cv2.rotate(img, rng.choice([cv2.ROTATE_90_CLOCKWISE, cv2.ROTATE_90_COUNTERCLOCKWISE, cv2.ROTATE_180]))
+    img = np.clip(img.astype(np.float32) * rng.uniform(0.85, 1.15) + rng.uniform(-12, 12), 0, 255).astype(np.uint8)
+    return cv2.resize(img, (SIZE, SIZE), interpolation=cv2.INTER_LINEAR)
+
+
 class CardViews(Dataset):
     """All epochs in one dataset so a single persistent DataLoader serves the whole run."""
 
-    def __init__(self, cache_path, n_images, bgs, views_per_epoch, epochs, seed=0, hard_floor=0.5):
+    def __init__(self, cache_path, n_images, bgs, views_per_epoch, epochs, seed=0, hard_floor=0.5, real=None, real_frac=0.0):
+        self.real, self.real_frac = real or [], real_frac
         self.hard_floor = hard_floor
         self.cache_path = cache_path
         self.n_images = n_images
@@ -81,6 +117,9 @@ class CardViews(Dataset):
 
     def __getitem__(self, i):
         rng = random.Random(self.seed * 1_000_003 + i)
+        if self.real and rng.random() < self.real_frac:
+            img, cls = self.real[rng.randrange(len(self.real))]
+            return to_tensor(augment_real(img, rng)), cls
         idx = rng.randrange(self.n_images)
         hard = hard_for_epoch(i // self.views, self.epochs, self.hard_floor)
         return to_tensor(augment(self._img(idx), self.bgs, rng, hard)), idx
@@ -180,6 +219,8 @@ def main():
     ap.add_argument('--workers', type=int, default=10)
     ap.add_argument('--export-only', default=None)
     ap.add_argument('--init', default=None, help='checkpoint to continue from')
+    ap.add_argument('--real-labels', default=None, help='data/labels/crops.jsonl: labelled crops mixed in as views')
+    ap.add_argument('--real-frac', type=float, default=0.15, help='fraction of views drawn from labelled crops')
     ap.add_argument('--hard-from-start', action='store_true', help='skip the curriculum (for fine-tuning)')
     a = ap.parse_args()
     os.makedirs(a.out, exist_ok=True)
@@ -222,7 +263,11 @@ def main():
     best = 0.0
     log = open(os.path.join(a.out, 'log.jsonl'), 'a')
 
-    ds = CardViews(cache_path, len(images), bgs, a.views, a.epochs, seed=2 if a.init else 1, hard_floor=1.0 if a.hard_from_start else 0.5)
+    real = load_real_crops(a.real_labels, files_ok) if a.real_labels else []
+    if a.real_labels:
+        print(f"{len(real)} labelled real crops mixed in at {a.real_frac:.0%} of views")
+    ds = CardViews(cache_path, len(images), bgs, a.views, a.epochs, seed=2 if a.init else 1, hard_floor=1.0 if a.hard_from_start else 0.5,
+                   real=real, real_frac=a.real_frac if real else 0.0)
     dl = DataLoader(ds, batch_size=a.batch, shuffle=False, num_workers=a.workers, pin_memory=True,
                     persistent_workers=True, drop_last=True, prefetch_factor=2)
     steps_per_epoch = a.views // a.batch
