@@ -3,7 +3,7 @@
   "name": "Lens for Force of Will",
   "short_name": "FoW Lens",
   "version": "0.1.0",
-  "description": "Hover cards in Force of Will YouTube and Twitch videos to see them in high resolution. Unofficial fan project.",
+  "description": "Show high resolution Force of Will card overlays on YouTube and Twitch.",
   "homepage_url": "https://github.com/CHANGE-ME/fow_lense",
   "minimum_chrome_version": "116",
   "icons": {

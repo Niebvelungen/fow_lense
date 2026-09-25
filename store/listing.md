@@ -7,7 +7,7 @@ Copy from here into the developer dashboard. Fields with CHANGE-ME need a decisi
 **Name** (45 chars max): Lens for Force of Will
 
 **Summary** (132 chars max, same as manifest description):
-Hover cards in Force of Will YouTube and Twitch videos to see them in high resolution. Unofficial fan project.
+Show high resolution Force of Will card overlays on YouTube and Twitch.
 
 **Category**: Entertainment (alternative: Tools)
 
@@ -15,28 +15,24 @@ Hover cards in Force of Will YouTube and Twitch videos to see them in high resol
 
 **Description**:
 
-Lens for Force of Will finds the cards in a Force of Will TCG video and shows you the card in high
-resolution when you hover it, so you can follow feature matches and online client streams without
-pausing to squint.
+See every Force of Will card clearly while you watch. Lens for Force of Will spots the cards in a
+YouTube video or Twitch stream and shows a high resolution image of any card you hover, with its
+name, so you can follow a feature match without pausing or squinting.
 
-How it works
-- Open a Force of Will video on YouTube or a stream on Twitch.
-- Hover the video and click the lens icon in the top right corner of the player.
-- Move the mouse over any card on the table. A zoomed card image appears next to it with the card
-  name and the closest alternatives.
+Works on any video or livestream. It is most accurate on tabletop feature matches and online client
+streams where the cards are reasonably visible; tiny or badly blurred cards are left unmarked rather
+than guessed.
 
-Everything runs locally in your browser. Detection and recognition use small on-device models
-(ONNX Runtime WebAssembly). Nothing about you or what you watch is sent anywhere. The only network
-requests are for the card images themselves when a zoom is shown.
+To use it, hover a YouTube or Twitch video and click the Lens icon in its top-right corner, then
+move your mouse over a card. It only runs on videos where you turn it on. To hide the icon on all
+videos, disable the extension from its toolbar popup.
 
-Limits
-- Recognition works on cards that are reasonably legible in the video. Very small or badly blurred
-  table cards are left unlabelled rather than guessed.
-- Only YouTube watch pages and Twitch streams are supported.
+Everything runs in your browser. Card recognition uses small on-device models; nothing about you or
+what you watch is sent anywhere. The only network requests are for the card images themselves.
 
-Lens for Force of Will is an unofficial fan project and is not affiliated with or endorsed by
-Eye Spy Productions or Force of Will Co., Ltd. Force of Will and all card images are the property
-of their respective owners.
+Lens for Force of Will is a free, unofficial fan project and is not affiliated with or endorsed by
+Eye Spy Productions or Force of Will Co., Ltd. Force of Will and all card images belong to their
+respective owners.
 
 **Screenshots** (1280x800 or 640x400 PNG/JPEG, 1 to 5): take them from a feature match with the
 overlay active and a zoom open. Blur other people's faces if a webcam is in frame.
