@@ -24,7 +24,8 @@ unpacked source lives in `ext/src/` (git-ignored, third party, reference only).
 - Card data comes from a Heroku pg_dump of the fowsim (forceofwind.online) Django database.
   `tools/pgdump_extract.py` reads the custom dump format directly, no Postgres needed.
   A restored copy also runs in Docker container `fow-pg` (postgres:15, port 5433, db `fow`).
-- Card images are served from `https://fowsim.s3.amazonaws.com/media/cards/<image>.jpg`.
+- Card images are served from `https://fowsim.s3.amazonaws.com/media/cards/<image>.jpg` (the fowsim
+  owner has agreed to the extension using the bucket; base URL lives in `tools/config.py`).
   The file name is not always `<card_id>.jpg`, so always use the catalog's `image` field.
 - Card ids: DB marks flip sides with `^`, we use `*` (TCG Arena convention). J-Rulers end in `J`.
   Flip cards share one image, so the index has one entry per image named "Front // Back".

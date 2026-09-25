@@ -72,8 +72,8 @@ Host `store/privacy.md` on the repo (GitHub Pages or the raw file) and paste the
 
 ## Before uploading (checklist)
 
-1. `tools/config.py` IMAGE_BASE_URL: point at a host you control or have permission to use, then
-   `python tools/build_catalog.py` and `.venv/Scripts/python tools/build_index.py`.
+1. Image host: the fowsim S3 bucket in `tools/config.py`, used with the owner's permission. Nothing to
+   change unless the host moves (then `python tools/build_catalog.py` and `.venv/Scripts/python tools/build_index.py`).
 2. `extension/manifest.json`: `homepage_url`, and bump `version` for every upload (the store
    rejects re-uploads of the same version).
 3. `extension/icons/`: currently the Force of Will logo (`store/assets/fow-favicon-192.png`, installed with
