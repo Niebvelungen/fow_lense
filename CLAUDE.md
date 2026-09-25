@@ -49,6 +49,10 @@ Model history:
   small and rested table cards than the stock model. It tends to skip the large sidebar preview
   card that stream overlays show; that is acceptable, the target is gameplay on the table, not UI.
 
+- Installed embedder = runs/embedder3 (v1 fine-tuned 15 epochs with dice/counter/finger occluders and
+  tilt up to 30 degrees, after the user reported dice and tilted cards failing). On the table video:
+  18 vs 12 crops above 0.7, 10 vs 8 accepted; webcam video about even. runs/embedder is the previous
+  model for rollback (`cp runs/embedder/embedder.onnx extension/models/ && rebuild index`).
 - Experiments that did NOT help on the feature-match camera feed (keep for reference, do not repeat):
   haze/contrast-loss fine-tune of the embedder (runs/embedder2, same video scores), 1080p instead of
   720p source (identical scores: the table camera is soft, not the encode), query-time per-channel
