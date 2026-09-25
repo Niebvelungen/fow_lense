@@ -26,8 +26,8 @@ extension packages no card art.
 ## Regenerating data
 
 ```
-# catalog (data/cards.json) from the fowsim DB export
-python ../tools/build_arena_json.py ../data/cards.json ../data/cards_arena.json
+# catalog (data/cards.json); image host is IMAGE_BASE_URL in ../tools/config.py
+python ../tools/build_catalog.py
 # index (models/id-index.bin) from ../media/cards using models/embedder.onnx (3 views per card)
 ../.venv/Scripts/python ../tools/build_index.py
 # retrain the models (GPU): see the docstrings of tools/train_embedder.py and tools/train_detector.py

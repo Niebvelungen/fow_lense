@@ -11,7 +11,9 @@ import json, os, sys, collections
 SRC = sys.argv[1] if len(sys.argv) > 1 else 'data/cards.json'
 OUT = sys.argv[2] if len(sys.argv) > 2 else 'data/cards_arena.json'
 D = os.path.dirname(SRC)
-S3_BASE = 'https://fowsim.s3.amazonaws.com/media/'
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from config import IMAGE_BASE_URL  # noqa: E402
+S3_BASE = IMAGE_BASE_URL.rsplit('cards/', 1)[0]
 
 def load_tsv(name):
     with open(os.path.join(D, f'cardDatabase_{name}.tsv'), encoding='utf-8') as f:
