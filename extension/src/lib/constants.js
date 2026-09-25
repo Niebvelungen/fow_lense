@@ -1,4 +1,6 @@
 export const IDENTIFY_ON_HOVER = true;
+// Tried when the primary card image host fails; keep in sync with tools/config.py
+export const IMAGE_FALLBACK_BASE_URL = "https://fowsim.s3.amazonaws.com/media/cards/";
 export const SAMPLE_WIDTH = 640;
 export const SAMPLE_MS = 500;
 export const SAMPLE_IDLE_MS = 3000;

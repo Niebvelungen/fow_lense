@@ -1,3 +1,5 @@
+import { IMAGE_FALLBACK_BASE_URL } from "./constants.js";
+
 const CONFIDENT_SCORE = 0.5;
 const HOVER_ZOOM_WIDTH = 437;
 const HOVER_ZOOM_MAX_HEIGHT = 676;
@@ -213,6 +215,13 @@ const showZoom = (cardEl) => {
   zoom._riftTargetTrack = meta.trackId;
   fillZoomMeta(zoom, meta);
   const img = zoom.querySelector("img");
+  img.onerror = () => {
+    const file = meta.imageUrl.split("/").pop();
+    const fallback = IMAGE_FALLBACK_BASE_URL + file;
+    if (!file || img.src === fallback || img.src.startsWith(IMAGE_FALLBACK_BASE_URL)) return;
+    img.onerror = null;
+    img.src = fallback;
+  };
   img.src = meta.imageUrl;
   whenImageReady(img).then(() => {
     if (!zoom.isConnected || !zoom.classList.contains("is-live")) return;
