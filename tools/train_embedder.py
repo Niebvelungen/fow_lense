@@ -53,15 +53,16 @@ def build_cache(images, path):
     open(path + '.n', 'w').write(str(len(images)))
 
 
-def hard_for_epoch(epoch, epochs):
-    """Curriculum: start at half augmentation strength, reach full strength at 40% of training."""
-    return min(1.0, 0.5 + epoch / max(1, epochs * 0.4))
+def hard_for_epoch(epoch, epochs, floor=0.5):
+    """Curriculum: start at `floor` augmentation strength, reach full strength at 40% of training."""
+    return min(1.0, floor + epoch / max(1, epochs * 0.4))
 
 
 class CardViews(Dataset):
     """All epochs in one dataset so a single persistent DataLoader serves the whole run."""
 
-    def __init__(self, cache_path, n_images, bgs, views_per_epoch, epochs, seed=0):
+    def __init__(self, cache_path, n_images, bgs, views_per_epoch, epochs, seed=0, hard_floor=0.5):
+        self.hard_floor = hard_floor
         self.cache_path = cache_path
         self.n_images = n_images
         self.bgs = bgs
@@ -81,7 +82,7 @@ class CardViews(Dataset):
     def __getitem__(self, i):
         rng = random.Random(self.seed * 1_000_003 + i)
         idx = rng.randrange(self.n_images)
-        hard = hard_for_epoch(i // self.views, self.epochs)
+        hard = hard_for_epoch(i // self.views, self.epochs, self.hard_floor)
         return to_tensor(augment(self._img(idx), self.bgs, rng, hard)), idx
 
 
@@ -178,6 +179,8 @@ def main():
     ap.add_argument('--lr', type=float, default=1e-3)
     ap.add_argument('--workers', type=int, default=10)
     ap.add_argument('--export-only', default=None)
+    ap.add_argument('--init', default=None, help='checkpoint to continue from')
+    ap.add_argument('--hard-from-start', action='store_true', help='skip the curriculum (for fine-tuning)')
     a = ap.parse_args()
     os.makedirs(a.out, exist_ok=True)
 
@@ -194,6 +197,9 @@ def main():
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     model = Embedder().to(device)
+    if a.init:
+        model.load_state_dict(torch.load(a.init, map_location=device)['model'])
+        print('initialised from', a.init)
     if a.export_only:
         model.load_state_dict(torch.load(a.export_only, map_location=device)['model'])
         export_onnx(model, os.path.join(a.out, 'embedder.onnx'))
@@ -216,7 +222,7 @@ def main():
     best = 0.0
     log = open(os.path.join(a.out, 'log.jsonl'), 'a')
 
-    ds = CardViews(cache_path, len(images), bgs, a.views, a.epochs, seed=1)
+    ds = CardViews(cache_path, len(images), bgs, a.views, a.epochs, seed=2 if a.init else 1, hard_floor=1.0 if a.hard_from_start else 0.5)
     dl = DataLoader(ds, batch_size=a.batch, shuffle=False, num_workers=a.workers, pin_memory=True,
                     persistent_workers=True, drop_last=True, prefetch_factor=2)
     steps_per_epoch = a.views // a.batch
@@ -236,7 +242,7 @@ def main():
         if n < steps_per_epoch:
             continue
         ev = evaluate(model, cache_path, bgs, device)
-        rec = {'epoch': epoch + 1, 'loss': tot / max(1, n), 'hard': hard_for_epoch(epoch, a.epochs),
+        rec = {'epoch': epoch + 1, 'loss': tot / max(1, n), 'hard': hard_for_epoch(epoch, a.epochs, ds.hard_floor),
                'sec': round(time.time() - t0), **ev}
         print(json.dumps(rec), flush=True)
         log.write(json.dumps(rec) + "\n")

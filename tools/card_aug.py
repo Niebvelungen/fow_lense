@@ -88,12 +88,12 @@ def augment(card, bgs, rng, hard=1.0):
         canvas = cv2.rotate(canvas, cv2.ROTATE_180)
 
     # 4. resolution loss: downscale to a stream-like size, then to model size
-    small = int(rng.uniform(28, 120)) if rng.random() < 0.85 else SIZE
+    small = int(rng.uniform(22, 120)) if rng.random() < 0.85 else SIZE
     h, w = canvas.shape[:2]
     sw, sh = max(8, int(small * w / max(w, h))), max(8, int(small * h / max(w, h)))
     canvas = cv2.resize(canvas, (sw, sh), interpolation=rng.choice([cv2.INTER_AREA, cv2.INTER_LINEAR]))
     if rng.random() < 0.6:
-        k = rng.choice([3, 3, 5])
+        k = rng.choice([3, 3, 5, 5, 7])
         if rng.random() < 0.5:
             canvas = cv2.GaussianBlur(canvas, (k, k), 0)
         else:  # motion blur
@@ -108,11 +108,14 @@ def augment(card, bgs, rng, hard=1.0):
     # 5. photometric: exposure, contrast, colour cast, gamma, saturation, glare, noise, JPEG
     img = canvas.astype(np.float32)
     img = img * rng.uniform(0.6, 1.45) + rng.uniform(-30, 40)
-    img = (img - 128) * rng.uniform(0.6, 1.3) + 128
+    img = (img - 128) * rng.uniform(0.35 if hard >= 0.9 else 0.6, 1.3) + 128
     img += np.array([rng.uniform(-22, 22) for _ in range(3)], dtype=np.float32)
+    if rng.random() < 0.45 * hard:  # camera haze / glare wash-out: blend towards a light grey
+        haze = np.array([rng.uniform(170, 255) for _ in range(3)], dtype=np.float32)
+        img = img * (1 - (a := rng.uniform(0.15, 0.6))) + haze * a
     if rng.random() < 0.5:
         hsv = cv2.cvtColor(np.clip(img, 0, 255).astype(np.uint8), cv2.COLOR_BGR2HSV).astype(np.float32)
-        hsv[..., 1] *= rng.uniform(0.5, 1.3)
+        hsv[..., 1] *= rng.uniform(0.2 if hard >= 0.9 else 0.5, 1.3)
         hsv[..., 0] = (hsv[..., 0] + rng.uniform(-6, 6)) % 180
         img = cv2.cvtColor(np.clip(hsv, 0, 255).astype(np.uint8), cv2.COLOR_HSV2BGR).astype(np.float32)
     if rng.random() < 0.4:

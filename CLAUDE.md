@@ -49,6 +49,16 @@ Model history:
   small and rested table cards than the stock model. It tends to skip the large sidebar preview
   card that stream overlays show; that is acceptable, the target is gameplay on the table, not UI.
 
+- Experiments that did NOT help on the feature-match camera feed (keep for reference, do not repeat):
+  haze/contrast-loss fine-tune of the embedder (runs/embedder2, same video scores), 1080p instead of
+  720p source (identical scores: the table camera is soft, not the encode), query-time per-channel
+  contrast stretch (+0.03 median). What did help: sampling the video at 640 px instead of 480 for
+  the detector (+13% table boxes, free since the model input is 640 anyway).
+- Honest picture on the two test streams: table cards that are legible to a human are identified
+  correctly and consistently across frames (e.g. AVL-097 in 9 of 14 frames); the rest score
+  0.45-0.6 and are rejected. Next lever would be real labelled crops from streams, not more synthetic
+  augmentation.
+
 Training notes: Windows page file is small, so keep DataLoader workers modest (6 for the embedder,
 4 for YOLO) and never run both trainings at once. The trainer keeps a memmap cache of all card
 images in `runs/cards_208x290.npy`.

@@ -90,9 +90,24 @@ def crop_box(rgb, box):
     return crop
 
 
+AUTOCONTRAST = False
+
+
+def autocontrast(rgb):
+    """Per-channel 2-98 percentile stretch to undo camera haze."""
+    out = rgb.astype(np.float32)
+    for ch in range(3):
+        lo, hi = np.percentile(out[..., ch], (2, 98))
+        if hi - lo > 5:
+            out[..., ch] = (out[..., ch] - lo) * (255.0 / (hi - lo))
+    return np.clip(out, 0, 255).astype(np.uint8)
+
+
 def embed(session, crops):
     batch = []
     for c in crops:
+        if AUTOCONTRAST:
+            c = autocontrast(c)
         r = cv2.resize(c, (EMB_SIZE, EMB_SIZE), interpolation=cv2.INTER_CUBIC).astype(np.float32) / 255.0
         batch.append(((r - MEAN) / STD).transpose(2, 0, 1))
     if not batch:
@@ -127,13 +142,16 @@ def main():
     ap.add_argument("--every", type=float, default=20.0, help="seconds between sampled frames")
     ap.add_argument("--start", type=float, default=60.0)
     ap.add_argument("--max-frames", type=int, default=12)
-    ap.add_argument("--sample-width", type=int, default=480, help="width the detector sees (extension uses 480)")
+    ap.add_argument("--sample-width", type=int, default=640, help="width the detector sees (extension uses 640)")
     ap.add_argument("--out", default=None)
     ap.add_argument("--index", default=INDEX_NPZ)
     ap.add_argument("--det-model", default=DET_MODEL)
     ap.add_argument("--emb-model", default=EMB_MODEL)
+    ap.add_argument("--autocontrast", action="store_true")
     a = ap.parse_args()
 
+    global AUTOCONTRAST
+    AUTOCONTRAST = a.autocontrast
     out_dir = a.out or os.path.join(ROOT, "results", os.path.splitext(os.path.basename(a.video))[0])
     os.makedirs(out_dir, exist_ok=True)
     det = ort.InferenceSession(a.det_model, providers=["CPUExecutionProvider"])

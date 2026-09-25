@@ -1,5 +1,5 @@
 export const IDENTIFY_ON_HOVER = true;
-export const SAMPLE_WIDTH = 480;
+export const SAMPLE_WIDTH = 640;
 export const SAMPLE_MS = 500;
 export const SAMPLE_IDLE_MS = 3000;
 export const IDENTIFY_MS = 1000;
