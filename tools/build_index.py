@@ -23,6 +23,7 @@ MAGIC = b"FOWIDX01"
 VARIANTS_LITE = [
     ((0.00, 0.00, 1.00, 1.00), 0.0),   # full card
     ((0.00, 0.00, 1.00, 0.65), 0.0),   # art-focused (full-art prints differ below)
+    ((0.00, 0.00, 1.00, 1.00), -1.0),  # grayscale full card (monochrome chase prints)
 ]
 VARIANTS_FULL = [
     ((0.00, 0.00, 1.00, 1.00), 0.0),   # full card
@@ -51,7 +52,9 @@ def variants_of(img):
     w, h = img.size
     for (x0, y0, x1, y1), blur in VARIANTS:
         crop = img.crop((int(x0 * w), int(y0 * h), int(x1 * w), int(y1 * h)))
-        if blur:
+        if blur < 0:
+            crop = crop.convert("L").convert("RGB")
+        elif blur:
             crop = crop.filter(ImageFilter.GaussianBlur(blur))
         yield to_tensor(crop)
 

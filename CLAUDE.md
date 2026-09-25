@@ -10,7 +10,7 @@ unpacked source lives in `ext/src/` (git-ignored, third party, reference only).
 |---|---|
 | `extension/` | The extension. Load unpacked in Chrome. See `extension/README.md` |
 | `extension/data/cards.json` | Packaged catalog: flat list of `{id, name, orientation, imageUrl, image, set, tags}` |
-| `extension/models/` | Git-ignored. `card-detector.onnx` (YOLOv8n, ours), `embedder.onnx` (MobileNetV3-small, ours), `id-index.bin` (generated, 2 views per card) |
+| `extension/models/` | Git-ignored. `card-detector.onnx` (YOLOv8n, ours), `embedder.onnx` (MobileNetV3-small, ours), `id-index.bin` (generated, 3 views per card) |
 | `runs/` | Git-ignored. Training outputs: `runs/embedder/{best.pt,embedder.onnx,log.jsonl}`, `runs/detector*/` |
 | `datasets/cards/` | Git-ignored. Synthetic YOLO dataset from `tools/make_det_dataset.py` |
 | `tools/` | Python tooling: DB extraction, JSON builders, index builder, offline test harness |
@@ -33,7 +33,7 @@ unpacked source lives in `ext/src/` (git-ignored, third party, reference only).
 
 content script samples video at 480px -> YOLO card detector (640 letterbox) -> IoU tracker ->
 on hover: crop box at 320px -> embed 128x128 (ImageNet mean/std, 256-d unit vector) -> cosine
-match against index -> accept at score >= 0.80 and margin >= 0.05 -> overlay + S3 image zoom.
+match against index -> accept at score >= 0.70 and margin >= 0.05 -> overlay + S3 image zoom.
 
 `tools/test_pipeline.py` replicates this chain in Python for offline testing on videos and is the
 benchmark for any model change (`--det-model`, `--emb-model`, `--index` to test candidates before
@@ -53,6 +53,16 @@ Model history:
   tilt up to 30 degrees, after the user reported dice and tilted cards failing). On the table video:
   18 vs 12 crops above 0.7, 10 vs 8 accepted; webcam video about even. runs/embedder is the previous
   model for rollback (`cp runs/embedder/embedder.onnx extension/models/ && rebuild index`).
+- First real evaluation (916 labelled crops, 801 legible, 69 distinct cards, 2025-09-25):
+  occluder embedder v3: top-1 71.4%, top-5 82.5%, plain 83.7%, rotated 70.3%, dice 33.3%.
+  Threshold sweep showed 0.70 gives 230 correct / 1 wrong shown vs 118 / 0 at 0.80 -> EMBED_ACCEPT is 0.70.
+- Labels in training (runs/embedder4, feature-match labels only, webcam held out): held-out top-1
+  82.5% -> 86.9%, top-5 87.3% -> 96.4%, still 0 wrong shown. Installed model = runs/embedder5, same
+  recipe with all labels. Label caveats: tags on the first 280 labelled crops are missing (eval ignores
+  them), "rested" was merged into "rotated" (direction is ambiguous across camera setups).
+- Monochrome chase prints: users see grayscale variants that our images do not have. Handled with a
+  grayscale index view (3 views per card now, 25 MB index) and grayscale augmentation. Set numbers
+  visible at the card bottom could be an OCR fallback later; unreadable at 720p for now.
 - Experiments that did NOT help on the feature-match camera feed (keep for reference, do not repeat):
   haze/contrast-loss fine-tune of the embedder (runs/embedder2, same video scores), 1080p instead of
   720p source (identical scores: the table camera is soft, not the encode), query-time per-channel

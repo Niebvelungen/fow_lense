@@ -19,13 +19,26 @@ from test_pipeline import Index, embed, EMB_MODEL, INDEX_NPZ, EMBED_MARGIN  # no
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
-def load_labels(path):
-    recs = {}
+def load_labels(path, tags_valid_from=0, video=None, exclude_video=None):
+    recs, order = {}, []
     for line in open(path, encoding='utf-8'):
         if line.strip():
             r = json.loads(line)
+            if r['crop'] not in recs:
+                order.append(r['crop'])
             recs[r['crop']] = r
-    return list(recs.values())
+    out = []
+    for i, crop in enumerate(order):
+        r = recs[crop]
+        if video and r['video'] != video:
+            continue
+        if exclude_video and r['video'] == exclude_video:
+            continue
+        tags = {'rotated' if t == 'rested' else t for t in r.get('tags', [])}
+        r['tags'] = sorted(tags) if i >= tags_valid_from else []
+        r['tags_known'] = i >= tags_valid_from
+        out.append(r)
+    return out
 
 
 def crop_path(rec):
@@ -38,8 +51,11 @@ def main():
     ap.add_argument('--emb-model', default=EMB_MODEL)
     ap.add_argument('--index', default=INDEX_NPZ)
     ap.add_argument('--labels', default=os.path.join(ROOT, 'data', 'labels', 'crops.jsonl'))
+    ap.add_argument('--tags-valid-from', type=int, default=280, help='tags on the first N labelled crops are ignored')
+    ap.add_argument('--video', default=None, help='only crops from this video')
+    ap.add_argument('--exclude-video', default=None)
     a = ap.parse_args()
-    recs = [r for r in load_labels(a.labels) if os.path.exists(crop_path(r))]
+    recs = [r for r in load_labels(a.labels, a.tags_valid_from, a.video, a.exclude_video) if os.path.exists(crop_path(r))]
     if not recs:
         sys.exit('no labelled crops found')
     sess = ort.InferenceSession(a.emb_model, providers=['CPUExecutionProvider'])
@@ -58,7 +74,7 @@ def main():
         _, ranked = index.match(q, top=5)
         best, second = ranked[0], ranked[1]['score'] if len(ranked) > 1 else -1
         truth = canon(r['card_id']) if r['card_id'] not in ('unknown', 'not_card') else None
-        rows.append({'truth': truth, 'tags': set(r.get('tags', [])), 'best': best['id'], 'score': best['score'],
+        rows.append({'truth': truth, 'tags': set(r.get('tags', [])), 'tags_known': r.get('tags_known', True), 'best': best['id'], 'score': best['score'],
                      'margin': best['score'] - second, 'top5': [x['id'] for x in ranked]})
 
     legible = [x for x in rows if x['truth']]
@@ -67,11 +83,12 @@ def main():
         top1 = np.mean([x['best'] == x['truth'] for x in legible])
         top5 = np.mean([x['truth'] in x['top5'] for x in legible])
         print(f"legible: top-1 {top1:.1%}  top-5 {top5:.1%}")
-        for tag in ('dice', 'rotated', 'rested'):
-            sub = [x for x in legible if tag in x['tags']]
+        known = [x for x in legible if x['tags_known']]
+        for tag in ('dice', 'rotated'):
+            sub = [x for x in known if tag in x['tags']]
             if sub:
                 print(f"  {tag:8s} n={len(sub):3d}  top-1 {np.mean([x['best'] == x['truth'] for x in sub]):.1%}")
-        plain = [x for x in legible if not x['tags']]
+        plain = [x for x in known if not x['tags']]
         if plain:
             print(f"  {'plain':8s} n={len(plain):3d}  top-1 {np.mean([x['best'] == x['truth'] for x in plain]):.1%}")
     print("\nthreshold sweep (margin >= %.2f):  shown-correct / legible   wrong-shown / all" % EMBED_MARGIN)

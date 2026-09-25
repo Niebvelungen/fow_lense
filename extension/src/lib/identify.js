@@ -3,7 +3,7 @@ import { extractRect } from "./crop.js";
 import { embedImage, ensureEmbedder } from "./embed-id.js";
 import { loadIdIndex } from "./id-index.js";
 
-export const EMBED_ACCEPT = 0.8;
+export const EMBED_ACCEPT = 0.7;
 export const EMBED_MARGIN = 0.05;
 const CROP_EDGE = 320;
 

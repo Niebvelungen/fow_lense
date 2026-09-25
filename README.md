@@ -76,8 +76,8 @@ Both models ship as ONNX and were trained here with the scripts in `tools/` (nee
 ## Status
 
 - The embedder is trained on all Force of Will card images with stream-style degradation and
-  identifies large and medium cards reliably; the index holds two views per card (full card and
-  art band, so full-art prints still match on their illustration).
+  and on 916 hand-labelled stream crops; the index holds three views per card (full card,
+  art band for full-art prints, grayscale for monochrome chase prints).
 - The detector is fine-tuned on synthetic table scenes plus pseudo-labelled real frames and finds
   most table cards, including rested ones. Stream UI such as the sidebar card preview is not a
   target.

@@ -150,6 +150,10 @@ def augment(card, bgs, rng, hard=1.0):
     if rng.random() < 0.45 * hard:  # camera haze / glare wash-out: blend towards a light grey
         haze = np.array([rng.uniform(170, 255) for _ in range(3)], dtype=np.float32)
         img = img * (1 - (a := rng.uniform(0.15, 0.6))) + haze * a
+    if rng.random() < 0.12:  # monochrome chase-card prints: grayscale, sometimes with a slight tint
+        g = cv2.cvtColor(np.clip(img, 0, 255).astype(np.uint8), cv2.COLOR_BGR2GRAY).astype(np.float32)
+        tint = np.array([rng.uniform(0.9, 1.1) for _ in range(3)], dtype=np.float32)
+        img = g[..., None] * tint
     if rng.random() < 0.5:
         hsv = cv2.cvtColor(np.clip(img, 0, 255).astype(np.uint8), cv2.COLOR_BGR2HSV).astype(np.float32)
         hsv[..., 1] *= rng.uniform(0.2 if hard >= 0.9 else 0.5, 1.3)

@@ -58,7 +58,7 @@ def hard_for_epoch(epoch, epochs, floor=0.5):
     return min(1.0, floor + epoch / max(1, epochs * 0.4))
 
 
-def load_real_crops(labels_path, files):
+def load_real_crops(labels_path, files, exclude_video=None):
     """(crop image BGR, class index) for labelled legible crops whose card is in the class list."""
     import json as _json
     cards = _json.load(open(os.path.join(ROOT, 'extension', 'data', 'cards.json'), encoding='utf-8'))
@@ -70,6 +70,8 @@ def load_real_crops(labels_path, files):
             r = _json.loads(line)
             seen[r['crop']] = r
     for r in seen.values():
+        if exclude_video and r.get('video') == exclude_video:
+            continue
         cls = cls_of.get(img_of.get(r['card_id'], ''))
         if cls is None:
             continue
@@ -221,6 +223,7 @@ def main():
     ap.add_argument('--init', default=None, help='checkpoint to continue from')
     ap.add_argument('--real-labels', default=None, help='data/labels/crops.jsonl: labelled crops mixed in as views')
     ap.add_argument('--real-frac', type=float, default=0.15, help='fraction of views drawn from labelled crops')
+    ap.add_argument('--real-exclude-video', default=None, help='keep this video out of training for evaluation')
     ap.add_argument('--hard-from-start', action='store_true', help='skip the curriculum (for fine-tuning)')
     a = ap.parse_args()
     os.makedirs(a.out, exist_ok=True)
@@ -263,7 +266,7 @@ def main():
     best = 0.0
     log = open(os.path.join(a.out, 'log.jsonl'), 'a')
 
-    real = load_real_crops(a.real_labels, files_ok) if a.real_labels else []
+    real = load_real_crops(a.real_labels, files_ok, a.real_exclude_video) if a.real_labels else []
     if a.real_labels:
         print(f"{len(real)} labelled real crops mixed in at {a.real_frac:.0%} of views")
     ds = CardViews(cache_path, len(images), bgs, a.views, a.epochs, seed=2 if a.init else 1, hard_floor=1.0 if a.hard_from_start else 0.5,

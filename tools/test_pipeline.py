@@ -24,7 +24,7 @@ MODEL_SIZE, CONF, NMS_IOU = 640, 0.25, 0.45
 EMB_SIZE = 128
 MEAN = np.array([0.485, 0.456, 0.406], dtype=np.float32)
 STD = np.array([0.229, 0.224, 0.225], dtype=np.float32)
-EMBED_ACCEPT, EMBED_MARGIN = 0.8, 0.05
+EMBED_ACCEPT, EMBED_MARGIN = 0.7, 0.05
 CROP_EDGE = 320
 
 
