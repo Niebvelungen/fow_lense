@@ -9,6 +9,7 @@ usage: .venv/Scripts/python tools/test_pipeline.py VIDEO [--every 20] [--start 6
            [--out results/<video-stem>] [--sample-width 480]
 """
 import argparse, json, os, sys, time
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 import numpy as np
 import cv2
 import onnxruntime as ort

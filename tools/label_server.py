@@ -12,6 +12,7 @@ usage: .venv/Scripts/python tools/label_server.py results/label_yt_user_720p [re
        then open http://localhost:8765
 """
 import argparse, json, os, sys, webbrowser
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs, unquote
 

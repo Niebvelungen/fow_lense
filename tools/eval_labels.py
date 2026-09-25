@@ -8,6 +8,7 @@ usage: .venv/Scripts/python tools/eval_labels.py [--emb-model extension/models/e
            [--index data/index_embeddings.npz] [--labels data/labels/crops.jsonl]
 """
 import argparse, json, os, sys
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 import numpy as np
 import cv2
 import onnxruntime as ort

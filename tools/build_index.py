@@ -9,6 +9,7 @@ Cards that share one image file (flip cards: EDL-069 and EDL-069*) become a sing
 entry, otherwise the two identical embeddings would tie and the margin test would reject both.
 """
 import argparse, json, os, struct, sys, time
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 import numpy as np
 from PIL import Image, ImageFilter
 import onnxruntime as ort
