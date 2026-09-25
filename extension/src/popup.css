@@ -1,0 +1,157 @@
+:root {
+  --navy: #000;
+  --ink: #000;
+  --gold: #fff;
+  --text: #fff;
+  --muted: #fff;
+}
+
+body {
+  margin: 0;
+  width: 260px;
+  padding: 0;
+  background: var(--navy);
+  color: var(--text);
+  font: 14px/1.4 system-ui, sans-serif;
+}
+
+.power {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  margin: 0;
+  padding: 16px;
+  border: 0;
+  background: var(--navy);
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+}
+
+.power:hover .power-switch {
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.power:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: -2px;
+}
+
+.power-state {
+  font: 650 15px/1 system-ui, sans-serif;
+  letter-spacing: -0.01em;
+}
+
+.power[aria-pressed="true"] .power-state {
+  color: #fff;
+}
+
+.power-switch {
+  position: relative;
+  flex: 0 0 auto;
+  width: 44px;
+  height: 26px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.power-switch::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--text);
+  transition: transform 0.16s ease;
+}
+
+.power[aria-pressed="true"] .power-switch,
+.power[aria-pressed="true"]:hover .power-switch {
+  background: linear-gradient(90deg, #edb12b, #f57d05);
+}
+
+.power[aria-pressed="true"] .power-switch::after {
+  transform: translateX(18px);
+  background: #fff;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .power-switch::after {
+    transition: none;
+  }
+}
+
+.note {
+  margin: 0;
+  padding: 0 16px 16px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.progress {
+  margin: 0;
+  padding: 0;
+  background: var(--navy);
+}
+
+.progress-track {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 0;
+  background: var(--ink);
+}
+
+.progress-fill {
+  width: 36%;
+  height: 100%;
+  border-radius: 0;
+  background: var(--gold);
+}
+
+.progress.is-loading .progress-fill {
+  animation: rift-load 1.1s ease-in-out infinite;
+}
+
+.progress.is-error .progress-fill {
+  width: 100%;
+  background: #fff;
+  animation: none;
+}
+
+#progress-text {
+  margin: 0;
+  padding: 10px 16px 8px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+#progress-text[hidden] {
+  display: none;
+}
+
+.progress[hidden] {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .progress.is-loading .progress-fill {
+    animation: none;
+  }
+}
+
+@keyframes rift-load {
+  0% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(300%);
+  }
+}

@@ -1,0 +1,45 @@
+# --- stays local: source data and large binaries ---
+# Heroku Postgres dump of the fowsim database (contains user accounts and sessions)
+3f0d09ea-c4f8-4d9b-b0b3-364cd6a5f560
+*.dump
+*.pgdump
+
+# card images (fetch from https://fowsim.s3.amazonaws.com/media/cards/<image>.jpg)
+media/
+
+# raw table extracts from the dump (auth_user, sessions, decklists...) and generated embeddings
+data/*.tsv
+data/schema.sql
+data/*.npz
+data/*.npy
+
+# unpacked third-party "Lens for Riftbound" extension used as reference
+ext/
+
+# test videos and offline test output
+samples/
+results/
+
+# generated / borrowed models (rebuild with tools/build_index.py; ONNX models are documented in extension/README.md)
+extension/models/
+
+# training artefacts
+runs/
+datasets/
+*.pt
+*.pth
+*.ckpt
+
+# --- environment ---
+.venv/
+venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.env
+
+# --- editors / OS ---
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store

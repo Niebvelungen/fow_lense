@@ -1,0 +1,45 @@
+export const IDENTIFY_ON_HOVER = true;
+export const SAMPLE_WIDTH = 480;
+export const SAMPLE_MS = 500;
+export const SAMPLE_IDLE_MS = 3000;
+export const IDENTIFY_MS = 1000;
+export const IDENTIFY_IDLE_MS = 3000;
+export const POINTER_STILL_MS = 500;
+export const SCENE_CHANGE_MAD = 22;
+export const TRACK_MAX_MISSES = 1;
+export const MATCH_IOU = 0.28;
+export const VISUAL_ACCEPT = 0.13;
+export const VISUAL_ACCEPT_HALF = 0.11;
+export const VISUAL_MARGIN = 0.028;
+export const UPSIDE_DOWN_MARGIN = 0.02;
+export const DRIFT_GRID = 0.12;
+export const GRID_COLS = 8;
+export const GRID_ROWS = 11;
+export const TILE_GRID = 6;
+export const TILE_SLIDE_PENALTY = 0.015;
+export const FINGERPRINT_BATCH = 16;
+export const FINGERPRINT_VERSION = 4;
+export const CATALOG_PAGE_SIZE = 100;
+
+export const STORAGE_CARDS = "fow.cards";
+export const STORAGE_FINGERPRINTS = "fow.fingerprints";
+export const STORAGE_META = "fow.meta";
+export const STORAGE_RECORD_STILLS = "fow.recordStills";
+export const STORAGE_SHOW_IDS = "fow.showIds";
+export const STORAGE_SHOW_CARD_DETAILS = "fow.showCardDetails";
+export const STORAGE_ENABLED = "fow.enabled";
+export const STORAGE_SHOW_QUICK_OVERLAY = "fow.showQuickOverlay";
+
+export const CAPTURE_MIN_MS = 2000;
+export const CAPTURE_MAD = 10;
+export const CAPTURE_SAME = 6;
+export const CAPTURE_STALE_MS = 8000;
+export const CAPTURE_RECENT = 3;
+export const CAPTURE_MAX_FRAMES = 250;
+export const CAPTURE_MAX_EDGE = 1280;
+export const ID_EXPORT_JPEG_QUALITY = 0.92;
+export const ID_EXPORT_OFFICIAL_MS = 6000;
+export const ID_EXPORT_OFFICIAL_CONCURRENCY = 6;
+
+export const IDENTIFY_CROP_EDGE = 320;
+export const CORRECT_CROP_EDGE = 720;

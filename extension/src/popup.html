@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Lens for Force of Will</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <button type="button" id="power" class="power" aria-pressed="false" aria-label="Enable overlay">
+      <span class="power-state">Disabled</span>
+      <span class="power-switch" aria-hidden="true"></span>
+    </button>
+    <div id="extras" hidden>
+      <p class="note">Tap the icon on the top-right corner of a Youtube or Twitch video.</p>
+    </div>
+    <div id="progress" class="progress" hidden>
+      <p id="progress-text" role="status" hidden></p>
+      <div class="progress-track"><div class="progress-fill"></div></div>
+    </div>
+    <script src="popup.js"></script>
+  </body>
+</html>
