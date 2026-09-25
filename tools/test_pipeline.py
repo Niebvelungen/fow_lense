@@ -130,12 +130,14 @@ def main():
     ap.add_argument("--sample-width", type=int, default=480, help="width the detector sees (extension uses 480)")
     ap.add_argument("--out", default=None)
     ap.add_argument("--index", default=INDEX_NPZ)
+    ap.add_argument("--det-model", default=DET_MODEL)
+    ap.add_argument("--emb-model", default=EMB_MODEL)
     a = ap.parse_args()
 
     out_dir = a.out or os.path.join(ROOT, "results", os.path.splitext(os.path.basename(a.video))[0])
     os.makedirs(out_dir, exist_ok=True)
-    det = ort.InferenceSession(DET_MODEL, providers=["CPUExecutionProvider"])
-    emb = ort.InferenceSession(EMB_MODEL, providers=["CPUExecutionProvider"])
+    det = ort.InferenceSession(a.det_model, providers=["CPUExecutionProvider"])
+    emb = ort.InferenceSession(a.emb_model, providers=["CPUExecutionProvider"])
     index = Index(a.index)
     print(f"index: {index.n} cards, {len(index.emb)} embeddings")
 
