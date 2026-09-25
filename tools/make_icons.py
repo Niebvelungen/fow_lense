@@ -2,10 +2,11 @@ r"""Generate the extension's own icons (placeholder art, replace with real artwo
 a card silhouette under a lens ring. Writes extension/icons/toolbar{16,32,48,128}.png and the
 overlay_on / overlay_off SVGs used by the in-player toggle button.
 
-usage: .venv/Scripts/python tools/make_icons.py
+usage: .venv/Scripts/python tools/make_icons.py                      # generated placeholder art
+       .venv/Scripts/python tools/make_icons.py --source logo.png    # resize a given PNG (square, RGBA)
 """
-import os
-from PIL import Image, ImageDraw
+import argparse, base64, io, os
+from PIL import Image, ImageDraw, ImageOps
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, 'extension', 'icons')
@@ -50,8 +51,34 @@ OVERLAY_SVG = """<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xml
 """
 
 
+IMAGE_SVG = """<svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<image href="data:image/png;base64,{b64}" x="0" y="0" width="24" height="24"/>
+</svg>
+"""
+
+
+def png_b64(im):
+    buf = io.BytesIO()
+    im.save(buf, 'PNG')
+    return base64.b64encode(buf.getvalue()).decode('ascii')
+
+
 def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument('--source', default=None, help='square RGBA PNG to use instead of the generated art')
+    a = ap.parse_args()
     os.makedirs(OUT, exist_ok=True)
+    if a.source:
+        src = Image.open(a.source).convert('RGBA')
+        for size in (16, 32, 48, 128):
+            src.resize((size, size), Image.LANCZOS).save(os.path.join(OUT, f'toolbar{size}.png'))
+        on = src.resize((48, 48), Image.LANCZOS)
+        off = ImageOps.grayscale(on).convert('RGBA')
+        off.putalpha(on.split()[3].point(lambda v: int(v * 0.6)))
+        open(os.path.join(OUT, 'overlay_on.svg'), 'w', encoding='utf-8').write(IMAGE_SVG.format(b64=png_b64(on)))
+        open(os.path.join(OUT, 'overlay_off.svg'), 'w', encoding='utf-8').write(IMAGE_SVG.format(b64=png_b64(off)))
+        print('icons written to', OUT, 'from', a.source)
+        return
     for size in (16, 32, 48, 128):
         draw_icon(size).save(os.path.join(OUT, f'toolbar{size}.png'))
     on = OVERLAY_SVG.format(card='#e8c85c', stroke='#ffffff', art='#568cd6', lens='rgba(255,255,255,0.18)')

@@ -76,8 +76,9 @@ Host `store/privacy.md` on the repo (GitHub Pages or the raw file) and paste the
    `python tools/build_catalog.py` and `.venv/Scripts/python tools/build_index.py`.
 2. `extension/manifest.json`: `homepage_url`, and bump `version` for every upload (the store
    rejects re-uploads of the same version).
-3. `extension/icons/`: replace the generated placeholder icons with final artwork if you want
-   (128 px is what the store shows). `tools/make_icons.py` regenerates the placeholders.
+3. `extension/icons/`: currently the Force of Will logo (`store/assets/fow-favicon-192.png`, installed with
+   `tools/make_icons.py --source ...`). Using the trademark owner's mark raises the odds of an
+   impersonation flag or complaint; `tools/make_icons.py` without arguments restores generic icons.
 4. `.venv/Scripts/python tools/package_extension.py` -> `dist/lens-for-fow-<version>.zip`
    (about 42 MB; the store limit is far above that).
 5. Test the zip: `chrome://extensions` -> Load unpacked from an unzipped copy, or drag the zip
