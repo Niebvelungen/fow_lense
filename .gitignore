@@ -44,3 +44,4 @@ __pycache__/
 Thumbs.db
 .DS_Store
 dist/
+dist/lens-for-fow-0.1.0.zip
