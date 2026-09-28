@@ -105,9 +105,25 @@ const toResult = (ranked) => {
   };
 };
 
+const statusHandlers = new Set();
+
+// Subscribe to matcher status changes from the same page. Chrome's offscreen document reports
+// status to the service worker with a message (below); on Firefox the engine lives in the
+// background page itself and a page never receives its own sendMessage, so the background
+// page subscribes here instead.
+export const onIdMatcherStatus = (handler) => {
+  statusHandlers.add(handler);
+  return () => statusHandlers.delete(handler);
+};
+
 const publishMatcher = (phase, detail = "") => {
   matcherPhase = phase;
   matcherDetail = detail;
+  for (const handler of statusHandlers) {
+    try {
+      handler(phase, detail);
+    } catch {}
+  }
   chrome.runtime
     .sendMessage({ type: "indexStatus", phase, detail })
     .catch(() => {});

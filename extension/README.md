@@ -1,6 +1,6 @@
 # Lens for Force of Will
 
-Chrome extension that detects Force of Will cards in YouTube and Twitch videos and shows a
+Chrome and Firefox extension that detects Force of Will cards in YouTube and Twitch videos and shows a
 high resolution card image on hover. Derived from the "Lens for Riftbound" extension
 (unpacked source in `../ext/src`), with the catalog, index and branding swapped.
 
@@ -9,6 +9,21 @@ high resolution card image on hover. Derived from the "Lens for Riftbound" exten
 1. Open `chrome://extensions`, enable **Developer mode**.
 2. **Load unpacked** and pick this `extension/` folder.
 3. Open a YouTube watch page or Twitch stream, hover the video and click the icon in the top right corner of the player.
+
+## Load in Firefox
+
+Firefox has no `offscreen` API, so the recognition engine runs in the extension's background page
+(`src/background-firefox.html`) instead of an offscreen document. `tools/export_firefox.py` copies
+this folder to `dist/firefox/` with a rewritten manifest (no `offscreen`, background page, add-on
+id and data collection declaration) and zips it for addons.mozilla.org.
+
+```
+../.venv/Scripts/python ../tools/export_firefox.py        # dist/firefox/ + dist/lens-for-fow-<version>-firefox.zip
+```
+
+Then `about:debugging#/runtime/this-firefox` -> **Load Temporary Add-on** -> `dist/firefox/manifest.json`.
+Firefox 127+ asks for the YouTube and Twitch host permissions at install; on older versions grant
+them in the add-on's **Permissions** tab in `about:addons`. Store notes are in `../store/firefox.md`.
 
 ## How it works
 

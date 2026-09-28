@@ -13,7 +13,8 @@ unpacked source lives in `ext/src/` (git-ignored, third party, reference only).
 | `extension/models/` | Git-ignored. `card-detector.onnx` (YOLOv8n, ours), `embedder.onnx` (MobileNetV3-small, ours), `id-index.bin` (generated, 3 views per card) |
 | `runs/` | Git-ignored. Training outputs: `runs/embedder/{best.pt,embedder.onnx,log.jsonl}`, `runs/detector*/` |
 | `datasets/cards/` | Git-ignored. Synthetic YOLO dataset from `tools/make_det_dataset.py` |
-| `tools/` | Python tooling: DB extraction, JSON builders, index builder, offline test harness |
+| `tools/` | Python tooling: DB extraction, JSON builders, index builder, offline test harness, store packaging (`package_extension.py` Chrome zip, `export_firefox.py` Firefox build + zip) |
+| `store/` | Store listing text: `listing.md` (Chrome), `firefox.md` (AMO), `privacy.md` |
 | `data/cards.json` | Flat card export from the DB (all 8,307 cards, DB ids, abilities, rulings) |
 | `data/cards_arena.json` | Same data in the TCG Arena nested format plus `image` and `image_url` |
 | `media/cards/` | Git-ignored. 8,173 card JPEGs (480x670), file name = `image` field in the catalog |
@@ -95,6 +96,17 @@ images in `runs/cards_208x290.npy`.
 - Recognise cards in play on the table (physical camera feeds and online clients). Stream UI such
   as the sidebar card preview is not a target; it is already readable.
 - Prefer an unlabelled box over a wrong label: acceptance thresholds stay strict.
+
+## Browsers
+
+- `extension/` is the Chrome source and loads unpacked as is. Firefox is a derived build:
+  `tools/export_firefox.py` copies it to `dist/firefox/` with a rewritten manifest (no `offscreen`,
+  `background.page` = `src/background-firefox.html`, `host_permissions`, gecko id from `tools/config.py`).
+- Chrome runs the engine in an offscreen document (`src/background.js` + `src/engine-host.html`);
+  Firefox runs the same `src/engine-host.js` inside its background page (`src/background-firefox.js`).
+  Keep `engine-host.js` browser neutral; a page never receives its own `runtime.sendMessage`, so
+  in-page status goes through `onIdMatcherStatus` in `lib/identify.js`.
+- Everything else (content script, popup, libs) uses `chrome.*` with promises, which Firefox supports.
 
 ## Conventions
 

@@ -1,6 +1,6 @@
 # Privacy policy for Lens for Force of Will
 
-Last updated: 2026-09-25
+Last updated: 2026-09-28
 
 Lens for Force of Will is a browser extension that recognises Force of Will trading cards in
 YouTube and Twitch videos and shows a high resolution image of the hovered card.
@@ -24,8 +24,9 @@ YouTube and Twitch videos and shows a high resolution image of the hovered card.
 ## Permissions and why they are needed
 
 - `storage`: keeps your on/off setting for the overlay and the model loading status on your device.
-- `offscreen`: runs the card recognition models in a background document so the video page stays
-  responsive.
+- `offscreen` (Chrome only): runs the card recognition models in a background document so the
+  video page stays responsive. On Firefox the models run in the extension's background page, which
+  needs no extra permission.
 - Access to `youtube.com` and `twitch.tv`: the extension's script runs on these two sites only, to
   read frames of the video you are watching and draw the overlay on the player. It stays idle until
   you activate the Lens icon on a video.
@@ -37,7 +38,7 @@ YouTube and Twitch videos and shows a high resolution image of the hovered card.
 
 ## Contact
 
-Questions: open an issue on the project's repository (see the homepage link in the store listing)
+Questions: open an issue on the project's repository (see the homepage link in the store or add-on listing)
 or write to the support email shown on the store listing.
 
 Changes to this policy will be published at the same address with an updated date.

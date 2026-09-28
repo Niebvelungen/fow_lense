@@ -8,6 +8,8 @@ import json, os, sys, zipfile
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 EXT = os.path.join(ROOT, 'extension')
 EXCLUDE_FILES = {'README.md', '.DS_Store', 'Thumbs.db'}
+# Firefox background page (tools/export_firefox.py); Chrome uses src/background.js + the offscreen document
+EXCLUDE_PATHS = {'src/background-firefox.html', 'src/background-firefox.js'}
 REQUIRED = ['manifest.json', 'models/card-detector.onnx', 'models/embedder.onnx', 'models/id-index.bin',
             'data/cards.json', 'vendor/ort/ort-wasm-simd-threaded.wasm', 'icons/toolbar128.png']
 
@@ -35,10 +37,11 @@ def main():
         for root, dirs, files in os.walk(EXT):
             dirs[:] = [d for d in dirs if not d.startswith('.')]
             for f in sorted(files):
-                if f in EXCLUDE_FILES:
-                    continue
                 p = os.path.join(root, f)
-                z.write(p, os.path.relpath(p, EXT).replace(os.sep, '/'))
+                rel = os.path.relpath(p, EXT).replace(os.sep, '/')
+                if f in EXCLUDE_FILES or rel in EXCLUDE_PATHS:
+                    continue
+                z.write(p, rel)
                 n += 1
     print(f"{out}: {n} files, {os.path.getsize(out) / 1e6:.1f} MB (version {manifest['version']})")
 

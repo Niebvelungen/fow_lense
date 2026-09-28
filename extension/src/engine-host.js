@@ -3,6 +3,11 @@ import { idMatcherStatus } from "./lib/identify.js";
 
 const engines = new Map();
 
+// Forget the engine of a closed tab (Firefox background page; Chrome closes the whole
+// offscreen document instead).
+export const dropEngine = (tabId) => engines.delete(tabId ?? 0);
+export const dropAllEngines = () => engines.clear();
+
 const engineFor = (tabId) => {
   const key = tabId ?? 0;
   let engine = engines.get(key);
@@ -28,7 +33,7 @@ const toPixels = (data) => {
   return new Uint8ClampedArray();
 };
 
-const handleEngineMessage = async (data, tabId) => {
+export const handleEngineMessage = async (data, tabId) => {
   const engine = () => engineFor(tabId);
   if (data.type === "fingerprints") {
     engine().setFingerprints(data.fingerprints);
